@@ -1,0 +1,13 @@
+streamlit
+groq
+elevenlabs
+mysql-connector-python
+python-dotenv
+pydantic
+requests
+numpy
+pandas
+plotly
+sounddevice
+soundfile
+python-weather

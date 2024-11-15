@@ -3,6 +3,9 @@
 ## Overview 🌟
 Veloce_AI is an intelligent, feature-rich virtual assistant designed to enhance the driving experience for Volkswagen vehicle owners. Leveraging cutting-edge technologies, this application offers a comprehensive suite of services, catering to the diverse needs of modern vehicle users.
 
+## Architecture 🗺️
+![diagram-export-11-15-2024-7_53_32-PM](https://github.com/user-attachments/assets/52063c73-2930-4395-af0a-975475a8942e)
+
 ## Features 🌟
 1. **Vehicle Information and Status 📊**: Access detailed insights into your Volkswagen's performance, including current mileage, battery level, tire pressure, and engine oil life, empowering you to stay informed and proactive.
 2. **Maintenance Scheduling and Alerts 🔔**: Receive timely maintenance reminders and seamlessly schedule service appointments, ensuring your vehicle remains in optimal condition.
@@ -37,7 +40,7 @@ Veloce_AI seamlessly integrates with a variety of APIs to deliver a comprehensiv
 5. Start the application: `streamlit run app.py`
 
 ## Upcoming Updates 📈
-Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future:
+Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future(Due to time constraint we have resorted to only the base features):
 
 1. Improved system prompt handling for different request types
 2. Database integration for real vehicle data
@@ -53,5 +56,5 @@ Veloce_AI is a constantly evolving platform, with a roadmap of exciting new feat
 12. Refinements to the user interface
 13. Integration with external systems (Android Auto, VM app, car dashboards)
 
-## Architecture 🗺️
-![Veloce_AI Architecture](architecture.png)
+
+

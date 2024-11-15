@@ -1,35 +1,57 @@
-# Veloce_AI
+# Veloce_AI 🚗💻
 
-Veloce_AI is a project aimed at providing AI-driven solutions for various tasks. This repository contains the source code, static files, and other necessary components to run the application.
+## Overview 🌟
+Veloce_AI is an intelligent, feature-rich virtual assistant designed to enhance the driving experience for Volkswagen vehicle owners. Leveraging cutting-edge technologies, this application offers a comprehensive suite of services, catering to the diverse needs of modern vehicle users.
 
-## Project Structure
-```
-└── 📁Veloce_AI
-    └── 📁database
-        └── __init__.py
-        └── db_setup.py
-        └── models.py
-    └── 📁static
-        └── 📁css
-            └── style.css
-        └── 📁images
-            └── mic-off.png
-            └── mic-on.png
-            └── vw-logo.png
-        └── 📁js
-            └── main.js
-    └── 📁utils
-        └── 📁__pycache__
-            └── __init__.cpython-312.pyc
-            └── audio.cpython-312.pyc
-            └── weather.cpython-312.pyc
-        └── __init__.py
-        └── audio.py
-        └── weather.py
-    └── .env
-    └── .gitignore
-    └── app.py
-    └── README.md
-    └── requirements.txt
-    └── VeloceAi.sql
-```
+## Features 🌟
+1. **Vehicle Information and Status 📊**: Access detailed insights into your Volkswagen's performance, including current mileage, battery level, tire pressure, and engine oil life, empowering you to stay informed and proactive.
+2. **Maintenance Scheduling and Alerts 🔔**: Receive timely maintenance reminders and seamlessly schedule service appointments, ensuring your vehicle remains in optimal condition.
+3. **Weather Updates and Driving Conditions 🌤️**: Stay ahead of the weather and plan your trips efficiently with real-time updates on temperature, humidity, wind speed, and potential driving hazards.
+4. **Voice Commands for Vehicle Controls 🎙️**: Conveniently control various vehicle functions, such as locking/unlocking doors, turning on/off lights, and adjusting climate settings, using intuitive voice commands.
+5. **Navigation Assistance 🗺️**: Enjoy turn-by-turn directions, traffic updates, and other navigation-related information to reach your destination with ease and efficiency.
+6. **Battery Management for Electric Vehicles ⚡**: Monitor and manage the battery level of your electric Volkswagen, ensuring you have the necessary charge for your journeys.
+
+## Tech Stack 🛠️
+Veloce_AI is built upon a robust and diverse technology stack, leveraging the latest advancements in the industry:
+
+- **Python 🐍**: The programming language of choice, renowned for its versatility and ease of use.
+- **Streamlit 🚀**: A powerful Python library for building interactive web applications, enabling a seamless user experience.
+- **MySQL 🗄️**: The database management system utilized to store and manage vehicle and maintenance data.
+- **Groq 🧠**: A state-of-the-art language model API, providing advanced natural language processing and generation capabilities.
+- **ElevenLabs 🔊**: An API that enables high-quality text-to-speech conversion, enhancing the voice assistant functionality.
+- **OpenWeatherMap 🌍**: An API that delivers accurate and up-to-date weather information, crucial for informed decision-making.
+- **Additional Libraries 📚**: `numpy`, `pandas`, `plotly`, `sounddevice`, `soundfile`, `python-weather`, `mysql-connector-python`, `python-dotenv`, `pydantic`, `requests`, and more.
+
+## APIs Used 🔑
+Veloce_AI seamlessly integrates with a variety of APIs to deliver a comprehensive and intelligent user experience:
+
+- **Groq 🧠**: For advanced natural language processing and generation tasks.
+- **ElevenLabs 🔊**: For high-quality text-to-speech conversion.
+- **OpenWeatherMap 🌍**: For retrieving real-time weather data and forecasts.
+
+## Getting Started 🚀
+1. Clone the repository: `git clone https://github.com/HimanshuMohanty-Git24/Veloce_Ai.git`
+2. Install the required dependencies: `pip install -r requirements.txt`
+3. Set up the environment variables in the `.env` file.
+4. Initialize the database: `python database/db_setup.py`
+5. Start the application: `streamlit run app.py`
+
+## Upcoming Updates 📈
+Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future:
+
+1. Improved system prompt handling for different request types
+2. Database integration for real vehicle data
+3. Enhanced real-time voice assistant functionality
+4. Integration of a Google Search-based agent
+5. Vehicle function control features (e.g., lights, locks)
+6. More robust system prompt for wider agent capabilities
+7. Music playback feature using YTMusic API
+8. SOS feature for emergency situations
+9. Image upload and analysis using Groq's vision model
+10. User profiles and personalized experiences
+11. Additional database tables and dummy data
+12. Refinements to the user interface
+13. Integration with external systems (Android Auto, VM app, car dashboards)
+
+## Architecture 🗺️
+![Veloce_AI Architecture](architecture.png)

@@ -2,6 +2,8 @@
 ```diff
 ! This is just a protype we are working on the complete System that can be integrated with the Car System and the mobile apps in the future.
 ```
+![Veloce Ai Ui](https://github.com/user-attachments/assets/626972b8-8eca-4b5e-a24f-915c48e56643)
+
 ## Overview 🌟
 Veloce_AI is an intelligent, feature-rich virtual assistant designed to enhance the driving experience for Volkswagen vehicle owners. Leveraging cutting-edge technologies, this application offers a comprehensive suite of services, catering to the diverse needs of modern vehicle users.
 

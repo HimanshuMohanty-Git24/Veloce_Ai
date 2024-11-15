@@ -1,6 +1,6 @@
 # Veloce_AI 🚗💻
 ```diff
-! This is just a protype we are working on the complete System that can be integrated with the Car System and the mobile apps in the future.
+! This is just a prototype we are working on the complete system that can be integrated with the Car System and the mobile apps in the future.
 ```
 ![Veloce Ai Ui](https://github.com/user-attachments/assets/626972b8-8eca-4b5e-a24f-915c48e56643)
 

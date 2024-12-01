@@ -14,6 +14,7 @@ import requests
 from datetime import datetime
 from streamlit_javascript import st_javascript
 import geocoder
+from vehicle_controller import VehicleController
 from utils.music import MusicManager
 
 # Load environment variables and setup logging
@@ -119,13 +120,24 @@ def process_ai_response(messages):
         last_text = str(last_message)
     
     logger.debug(f"Extracted text: {last_text}")
+    text = last_text.lower()
+    
+    # Check for vehicle control commands first
+    if any(word in text for word in ["light", "lights"]):
+        return st.session_state.vehicle_controller.control_lights(text)
+    
+    if any(word in text for word in ["lock", "unlock", "door"]):
+        return st.session_state.vehicle_controller.control_doors(text)
+    
+    if any(word in text for word in ["engine", "start", "stop"]):
+        return st.session_state.vehicle_controller.control_engine(text)
     
     # Check for music commands with more flexible matching
-    if any(word in last_text.lower() for word in ["play", "music", "song"]):
+    if any(word in text for word in ["play", "music", "song"]):
         logger.info("Music command detected")
         
         # Extract song name more robustly
-        query = last_text.lower()
+        query = text
         if "play" in query:
             query = query.split("play", 1)[1].strip()
         
@@ -140,7 +152,7 @@ def process_ai_response(messages):
             return f"Found the song but couldn't play {query}"
         return f"Sorry, I couldn't find '{query}' on YouTube Music"
 
-    # Continue with existing image processing
+    # Continue with image processing
     if st.session_state.current_image:
         messages_without_system = [msg for msg in messages if msg["role"] != "system"]
         clean_messages = []
@@ -163,7 +175,7 @@ def process_ai_response(messages):
             max_tokens=1024
         )
     else:
-        # Text-only mode (existing code)
+        # Text-only mode
         text_only_messages = []
         for msg in messages:
             if isinstance(msg["content"], list):
@@ -217,6 +229,9 @@ def main():
         st.sidebar.image(image, caption="Uploaded Image", use_column_width=True)
         st.session_state.current_image = encode_image(uploaded_file.getvalue())
     
+    if 'vehicle_controller' not in st.session_state:
+        st.session_state.vehicle_controller = VehicleController()
+        
     if st.session_state.current_image and st.sidebar.button("Clear Image"):
         st.session_state.current_image = None
         # Clean up message history
@@ -349,6 +364,13 @@ CAPABILITIES:
    - Handle voice/text commands for music control
    - Support song requests by name/artist
    - Play music through Streamlit's audio player
+
+6. Vehicle Controls:
+   - Control vehicle lights (on/off)
+   - Control door locks (lock/unlock)
+   - Control engine (start/stop)
+
+   For vehicle control commands, respond with the exact command executed.
 
 RESPONSE GUIDELINES:
 - Only use data available in CONTEXT_VARIABLES or DATABASE_ACCESS

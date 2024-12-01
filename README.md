@@ -43,13 +43,13 @@ Veloce_AI seamlessly integrates with a variety of APIs to deliver a comprehensiv
 4. Initialize the database: `python database/db_setup.py`
 5. Start the application: `streamlit run app.py`
 
-## Upcoming Updates 📈
-Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future(Due to time constraint we have resorted to only the base features):
+## Upcoming Updates (some updates already added✅❤️)📈
+Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future:
 
 1. Improved system prompt handling for different request types (Update Added ✅)
 2. Database integration for real vehicle data (Update Added ✅)
-3. Enhanced real-time voice assistant functionality
-4. Integration of a Google Search-based agent
+3. Enhanced real-time voice assistant functionality ((Update Added realively faster but can be more better with some paid model⭐))
+4. Integration of a Google Search-based agent for latest info (Update Added ✅)
 5. Vehicle function control features (e.g., lights, locks) (Update Added ✅)
 6. More robust system prompt for wider agent capabilities (Update Added ✅)
 7. Music playback feature using YTMusic API (Update Added ✅)
@@ -58,4 +58,4 @@ Veloce_AI is a constantly evolving platform, with a roadmap of exciting new feat
 10. User profiles and personalized experiences
 11. Additional database tables and dummy data (Update Added ✅)
 12. Refinements to the user interface (Update Added ✅)
-13. Integration with external systems (Android Auto, VM app, car dashboards)
+13. Integration with external systems (Android Auto, VM app, car dashboards) (Not possible realistically in this short time span)

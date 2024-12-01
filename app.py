@@ -106,8 +106,26 @@ def main():
                 logger.info(f"Transcribed text: {user_input}")
                 
                 if user_input:
+                    # Add user message to chat
                     st.session_state.messages.append({"role": "user", "content": user_input})
                     logger.info("Added user message to session state")
+                    
+                    # Get AI response
+                    with st.chat_message("assistant"):
+                        with st.spinner("Thinking..."):
+                            response = groq_client.chat.completions.create(
+                                model="llama3-70b-8192",
+                                messages=st.session_state.messages,
+                                temperature=0.7,
+                                max_tokens=1024
+                            )
+                            assistant_response = response.choices[0].message.content
+                            st.write(assistant_response)
+                            audio_manager.text_to_speech(assistant_response)
+                            
+                    # Add assistant response to chat history
+                    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+                    logger.info("Added assistant response to session state")
                 else:
                     st.error("No speech detected. Please try again.")
                     logger.warning("No speech detected in recording")

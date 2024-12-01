@@ -59,6 +59,3 @@ Veloce_AI is a constantly evolving platform, with a roadmap of exciting new feat
 11. Additional database tables and dummy data
 12. Refinements to the user interface
 13. Integration with external systems (Android Auto, VM app, car dashboards)
-
-
-

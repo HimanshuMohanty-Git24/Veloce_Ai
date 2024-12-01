@@ -11,3 +11,8 @@ plotly
 sounddevice
 soundfile
 python-weather
+future
+libpasteurize
+geocoder
+streamlit-javascript
+streamlit-player

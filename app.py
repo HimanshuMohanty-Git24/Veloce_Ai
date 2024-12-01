@@ -17,6 +17,7 @@ import geocoder
 from utils.vehicle_controller import VehicleController
 from utils.music import MusicManager
 from utils.sos_manager import SOSManager
+from utils.google_search import GoogleSearchClient
 
 # Load environment variables and setup logging
 load_dotenv()
@@ -29,6 +30,20 @@ weather_service = WeatherService()
 groq_client = Groq()
 music_manager = MusicManager()
 sos_manager = SOSManager(create_database_connection())
+
+def initialize_session_state():
+    """Initialize all session state variables"""
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
+        
+    if 'current_image' not in st.session_state:
+        st.session_state.current_image = None
+        
+    if 'google_search' not in st.session_state:
+        st.session_state.google_search = GoogleSearchClient()
+        
+    if 'vehicle_controller' not in st.session_state:
+        st.session_state.vehicle_controller = VehicleController()
 
 def get_current_location():
     """Get the user's current location based on IP address."""
@@ -83,11 +98,21 @@ def reverse_geocode(latitude, longitude):
 def encode_image(image_bytes):
     return base64.b64encode(image_bytes).decode('utf-8')
 
+# In app.py, replace both initialize_session_state() functions with:
+
 def initialize_session_state():
+    """Initialize all session state variables"""
     if 'messages' not in st.session_state:
         st.session_state.messages = []
+        
     if 'current_image' not in st.session_state:
         st.session_state.current_image = None
+        
+    if 'google_search' not in st.session_state:
+        st.session_state.google_search = GoogleSearchClient()
+        
+    if 'vehicle_controller' not in st.session_state:
+        st.session_state.vehicle_controller = VehicleController()
 
 def display_vehicle_status(vehicle_data):
     col1, col2 = st.columns(2)
@@ -108,14 +133,12 @@ def display_vehicle_status(vehicle_data):
         st.plotly_chart(fig)
 
 def process_ai_response(messages):
-    # Extract the last user message more reliably
+    # Extract the last user message 
     last_message = messages[-1]["content"]
     last_text = ""
     
-    # Add debug logging
     logger.debug(f"Processing message: {last_message}")
     
-    # Handle different message formats
     if isinstance(last_message, list):
         last_text = " ".join([c["text"] for c in last_message if c["type"] == "text"])
     else:
@@ -124,7 +147,7 @@ def process_ai_response(messages):
     logger.debug(f"Extracted text: {last_text}")
     text = last_text.lower()
     
-    # Check for SOS triggers first
+    # Emergency SOS check
     sos_triggers = ["sos", "emergency", "help", "call police", "danger", "accident"]
     if any(trigger in text for trigger in sos_triggers):
         user_location = get_current_location()
@@ -143,7 +166,7 @@ def process_ai_response(messages):
                 f"- Station Address: {nearest_station['address']}"
             )
     
-    # Check for vehicle control commands first
+    # Vehicle controls
     if any(word in text for word in ["light", "lights"]):
         return st.session_state.vehicle_controller.control_lights(text)
     
@@ -153,18 +176,14 @@ def process_ai_response(messages):
     if any(word in text for word in ["engine", "start", "stop"]):
         return st.session_state.vehicle_controller.control_engine(text)
     
-    # Check for music commands with more flexible matching
+    # Music commands
     if any(word in text for word in ["play", "music", "song"]):
         logger.info("Music command detected")
-        
-        # Extract song name more robustly
         query = text
         if "play" in query:
             query = query.split("play", 1)[1].strip()
         
         logger.info(f"Searching for song: {query}")
-        
-        # Try to play the song
         song_url = music_manager.search_song(query)
         if song_url:
             logger.info(f"Found song URL: {song_url}")
@@ -173,7 +192,23 @@ def process_ai_response(messages):
             return f"Found the song but couldn't play {query}"
         return f"Sorry, I couldn't find '{query}' on YouTube Music"
 
-    # Continue with image processing
+    # Google Search integration for general knowledge queries
+    info_keywords = ['who is', 'what is', 'current', 'latest', 'news about', 'tell me about']
+    if any(keyword in text.lower() for keyword in info_keywords):
+        logger.info("General knowledge query detected - searching Google")
+        search_results = st.session_state.google_search.search(text)
+        
+        if search_results:
+            # Add search context to messages
+            search_context = "\n\nBased on current search results:\n"
+            for result in search_results[:3]:
+                search_context += f"- {result['snippet']}\n"
+            messages.append({
+                "role": "system",
+                "content": f"Here is current information from Google Search: {search_context}"
+            })
+
+    # Image processing
     if st.session_state.current_image:
         messages_without_system = [msg for msg in messages if msg["role"] != "system"]
         clean_messages = []
@@ -213,7 +248,14 @@ def process_ai_response(messages):
             temperature=0.7,
             max_tokens=1024
         )
-    return response.choices[0].message.content
+
+    try:
+        ai_response = response.choices[0].message.content
+        logger.debug(f"AI Response: {ai_response}")
+        return ai_response
+    except Exception as e:
+        logger.error(f"Error generating response: {str(e)}")
+        return "I apologize, but I encountered an error processing your request. Please try again."
 
 def main():
     st.set_page_config(page_title="Veloce AI - Volkswagen Assistant",
@@ -420,12 +462,21 @@ CAPABILITIES:
    - Share real-time location
    - Trigger words: "SOS", "emergency", "help", "call police", "danger", "accident"
 
+8. Real-Time Information:
+   - Access to current information via Google Search
+   - Combine vehicle expertise with latest data
+   - Provide sourced information for non-vehicle queries
+
 RESPONSE GUIDELINES:
 - Only use data available in CONTEXT_VARIABLES or DATABASE_ACCESS
 - Indicate when data is not available or needs refresh
 - Format numbers with appropriate units (%, PSI, miles, °C)
 - Prioritize safety-critical information
 - Maintain professional Volkswagen brand voice
+- For current events/facts, utilize Google Search results
+- Cite sources when providing real-time information
+- Maintain focus on vehicle assistance as primary function
+- Gracefully transition between general knowledge and vehicle support
 
 If asked about non-VW vehicles, politely redirect to VW equivalents."""
 

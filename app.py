@@ -14,8 +14,9 @@ import requests
 from datetime import datetime
 from streamlit_javascript import st_javascript
 import geocoder
-from vehicle_controller import VehicleController
+from utils.vehicle_controller import VehicleController
 from utils.music import MusicManager
+from utils.sos_manager import SOSManager
 
 # Load environment variables and setup logging
 load_dotenv()
@@ -27,6 +28,7 @@ audio_manager = AudioManager()
 weather_service = WeatherService()
 groq_client = Groq()
 music_manager = MusicManager()
+sos_manager = SOSManager(create_database_connection())
 
 def get_current_location():
     """Get the user's current location based on IP address."""
@@ -121,6 +123,25 @@ def process_ai_response(messages):
     
     logger.debug(f"Extracted text: {last_text}")
     text = last_text.lower()
+    
+    # Check for SOS triggers first
+    sos_triggers = ["sos", "emergency", "help", "call police", "danger", "accident"]
+    if any(trigger in text for trigger in sos_triggers):
+        user_location = get_current_location()
+        if user_location:
+            sos_result = sos_manager.handle_sos_request(
+                user_location['latitude'],
+                user_location['longitude'],
+                situation=last_text
+            )
+            nearest_station = sos_result['nearest_police_station']
+            return (
+                f"🚨 EMERGENCY ALERT ACTIVATED!\n"
+                f"- Messages sent to {sos_result['messages_sent']} emergency contacts\n"
+                f"- Nearest Police Station: {nearest_station['name']}\n"
+                f"- Police Contact: {nearest_station['phone_number']}\n"
+                f"- Station Address: {nearest_station['address']}"
+            )
     
     # Check for vehicle control commands first
     if any(word in text for word in ["light", "lights"]):
@@ -252,6 +273,26 @@ def main():
         vehicle_data = cursor.fetchone()
         display_vehicle_status(vehicle_data)
         
+        # Add SOS Button here
+        col1, col2, col3 = st.columns([1,1,1])
+        with col2:
+            if st.button("🚨 SOS EMERGENCY"):
+                user_location = get_current_location()
+                if user_location:
+                    sos_result = sos_manager.handle_sos_request(
+                        user_location['latitude'],
+                        user_location['longitude'],
+                        situation="Emergency SOS button activated!"
+                    )
+                    nearest_station = sos_result['nearest_police_station']
+                    st.error(
+                        f"🚨 EMERGENCY ALERT ACTIVATED!\n"
+                        f"- Messages sent to {sos_result['messages_sent']} emergency contacts\n"
+                        f"- Nearest Police Station: {nearest_station['name']}\n"
+                        f"- Police Contact: {nearest_station['phone_number']}\n"
+                        f"- Station Address: {nearest_station['address']}"
+                    )
+        
         # Fetch necessary variables for system prompt
         current_vehicle_id = vehicle_data['id']
         vehicle_model = vehicle_data['model']
@@ -371,6 +412,13 @@ CAPABILITIES:
    - Control engine (start/stop)
 
    For vehicle control commands, respond with the exact command executed.
+
+7. Emergency SOS:
+   - Activate emergency protocols via voice/text
+   - Send alerts to emergency contacts
+   - Locate nearest police station
+   - Share real-time location
+   - Trigger words: "SOS", "emergency", "help", "call police", "danger", "accident"
 
 RESPONSE GUIDELINES:
 - Only use data available in CONTEXT_VARIABLES or DATABASE_ACCESS

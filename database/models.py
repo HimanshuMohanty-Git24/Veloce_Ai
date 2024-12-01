@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 @dataclass
 class Vehicle:
@@ -20,3 +21,19 @@ class MaintenanceRecord:
     service_type: str
     mileage: float
     description: str
+
+@dataclass
+class EmergencyContact:
+    id: int
+    name: str
+    phone_number: str
+    relation: str
+
+@dataclass
+class PoliceStation:
+    id: int
+    name: str
+    address: str
+    phone_number: str
+    latitude: Decimal
+    longitude: Decimal

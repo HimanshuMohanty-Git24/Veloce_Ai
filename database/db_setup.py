@@ -55,7 +55,7 @@ def initialize_database():
     # Create vehicles table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS vehicles (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT NOT NULL AUTO_INCREMENT,
             model VARCHAR(255),
             year INT,
             vin VARCHAR(17),
@@ -63,38 +63,80 @@ def initialize_database():
             battery_level FLOAT,
             tire_pressure JSON,
             engine_oil_life FLOAT,
-            last_service_date DATE
+            last_service_date DATE,
+            PRIMARY KEY (id)
         )
     """)
 
     # Create maintenance_records table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS maintenance_records (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT NOT NULL AUTO_INCREMENT,
             vehicle_id INT,
             service_date DATE,
             service_type VARCHAR(255),
             mileage FLOAT,
             description TEXT,
+            PRIMARY KEY (id),
             FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
         )
     """)
 
-    # Insert sample vehicle data
-    sample_vehicle = """
-        INSERT INTO vehicles (model, year, vin, current_mileage, battery_level, 
-                            tire_pressure, engine_oil_life, last_service_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    vehicle_data = [
-        ('ID.4', 2024, 'WVGZZZE2ZMP123456', 15000.5, 85.5, 
-         '{"FL": 32, "FR": 32, "RL": 32, "RR": 32}', 75.0, '2024-01-15'),
-        ('Golf GTI', 2023, 'WVWZZZ1KZNW987654', 22000.0, None,
-         '{"FL": 35, "FR": 35, "RL": 35, "RR": 34}', 45.0, '2023-12-01')
-    ]
+    # Create emergency_contacts table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS emergency_contacts (
+            id INT NOT NULL AUTO_INCREMENT,
+            name VARCHAR(100) NOT NULL,
+            phone_number VARCHAR(15) NOT NULL,
+            relation VARCHAR(50) NOT NULL,
+            PRIMARY KEY (id)
+        )
+    """)
 
+    # Create police_stations table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS police_stations (
+            id INT NOT NULL AUTO_INCREMENT,
+            name VARCHAR(100) NOT NULL,
+            address VARCHAR(255) NOT NULL,
+            phone_number VARCHAR(15) NOT NULL,
+            latitude DECIMAL(10,8) NOT NULL,
+            longitude DECIMAL(11,8) NOT NULL,
+            PRIMARY KEY (id)
+        )
+    """)
+
+    # Insert sample data
     try:
-        cursor.executemany(sample_vehicle, vehicle_data)
+        # Insert vehicles
+        cursor.executemany("""
+            INSERT INTO vehicles (model, year, vin, current_mileage, battery_level, 
+                                tire_pressure, engine_oil_life, last_service_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, [
+            ('ID.4', 2024, 'WVGZZZE2ZMP123456', 15000.5, 85.5, 
+             '{"FL": 32, "FR": 32, "RL": 32, "RR": 32}', 75.0, '2024-01-15'),
+            ('Golf GTI', 2023, 'WVWZZZ1KZNW987654', 22000.0, None,
+             '{"FL": 35, "FR": 35, "RL": 35, "RR": 34}', 45.0, '2023-12-01')
+        ])
+
+        # Insert emergency contacts
+        cursor.execute("""
+            INSERT INTO emergency_contacts (name, phone_number, relation)
+            VALUES ('Himanshu Mohanty', '+917008719907', 'brother')
+        """)
+
+        # Insert police stations
+        cursor.executemany("""
+            INSERT INTO police_stations (name, address, phone_number, latitude, longitude)
+            VALUES (%s, %s, %s, %s, %s)
+        """, [
+            ('Patia Police Station', 'Patia Square, Bhubaneswar', '+917008719907', 
+             20.351829, 85.824936),
+            ('Chandrasekharpur Police Station', 'Chandrasekharpur, Bhubaneswar', 
+             '+917008719907', 20.343242, 85.819873)
+        ])
+
         connection.commit()
     except Error as e:
         print(f"Error inserting sample data: {e}")

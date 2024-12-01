@@ -46,16 +46,16 @@ Veloce_AI seamlessly integrates with a variety of APIs to deliver a comprehensiv
 ## Upcoming Updates 📈
 Veloce_AI is a constantly evolving platform, with a roadmap of exciting new features and enhancements planned for the future(Due to time constraint we have resorted to only the base features):
 
-1. Improved system prompt handling for different request types
-2. Database integration for real vehicle data
+1. Improved system prompt handling for different request types (Update Added ✅)
+2. Database integration for real vehicle data (Update Added ✅)
 3. Enhanced real-time voice assistant functionality
 4. Integration of a Google Search-based agent
-5. Vehicle function control features (e.g., lights, locks)
-6. More robust system prompt for wider agent capabilities
-7. Music playback feature using YTMusic API
-8. SOS feature for emergency situations
-9. Image upload and analysis using Groq's vision model
+5. Vehicle function control features (e.g., lights, locks) (Update Added ✅)
+6. More robust system prompt for wider agent capabilities (Update Added ✅)
+7. Music playback feature using YTMusic API (Update Added ✅)
+8. SOS feature for emergency situations (Update Added ✅)
+9. Image upload and analysis using Groq's vision model (Update Added ✅)
 10. User profiles and personalized experiences
-11. Additional database tables and dummy data
-12. Refinements to the user interface
+11. Additional database tables and dummy data (Update Added ✅)
+12. Refinements to the user interface (Update Added ✅)
 13. Integration with external systems (Android Auto, VM app, car dashboards)

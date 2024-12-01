@@ -10,7 +10,10 @@ import plotly.graph_objects as go
 import logging
 import base64
 from PIL import Image
-import io
+import requests
+from datetime import datetime
+from streamlit_javascript import st_javascript
+import geocoder
 
 # Load environment variables and setup logging
 load_dotenv()
@@ -22,26 +25,62 @@ audio_manager = AudioManager()
 weather_service = WeatherService()
 groq_client = Groq()
 
-# System prompt
-SYSTEM_PROMPT = """You are Veloce AI, Volkswagen's intelligent vehicle assistant. You help users with:
-- Vehicle information and status
-- Maintenance scheduling and alerts
-- Weather updates and driving conditions
-- Voice commands for vehicle controls
-- Navigation assistance
-- Battery management for electric vehicles
+def get_current_location():
+    """Get the user's current location based on IP address."""
+    g = geocoder.ip('me')
+    if g.ok:
+        return {
+            'latitude': g.latlng[0],
+            'longitude': g.latlng[1]
+        }
+    else:
+        return None
 
-Always maintain a helpful, professional tone focusing on Volkswagen vehicles and their features. 
-If asked about non-Volkswagen vehicles, politely redirect to VW equivalents."""
+def reverse_geocode(latitude, longitude):
+    """Get the city name from latitude and longitude using reverse geocoding."""
+    url = 'https://nominatim.openstreetmap.org/reverse'
+    params = {
+        'format': 'json',
+        'lat': latitude,
+        'lon': longitude,
+        'zoom': 10,
+        'addressdetails': 1
+    }
+    headers = {
+        'User-Agent': 'VeloceAI/1.0'
+    }
+    try:
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        address = data.get('address', {})
+        
+        # Get city name and clean it
+        city = address.get('city', '')
+        if city:
+            # Extract just the first part before any special characters
+            city = city.split()[0].split(',')[0].strip()
+        
+        if not city:
+            # Try other fields if city is not found
+            for key in ['town', 'village', 'suburb', 'state']:
+                value = address.get(key, '')
+                if value:
+                    # Take just the first word
+                    city = value.split()[0]
+                    break
+        
+        return city if city else None
+    except Exception as e:
+        logger.error(f"Error in reverse geocoding: {str(e)}")
+        return None
 
 def encode_image(image_bytes):
     return base64.b64encode(image_bytes).decode('utf-8')
 
 def initialize_session_state():
     if 'messages' not in st.session_state:
-        st.session_state.messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        st.session_state.messages = []
     if 'current_image' not in st.session_state:
         st.session_state.current_image = None
 
@@ -122,6 +161,9 @@ def main():
     st.sidebar.title("Vehicle Selection")
     conn = create_database_connection()
     cursor = conn.cursor(dictionary=True)
+    # Option 1: Include 'vin' in the selection query
+    # cursor.execute("SELECT id, model, year, vin FROM vehicles")
+    # Option 2: Keep the original query
     cursor.execute("SELECT id, model, year FROM vehicles")
     vehicles = cursor.fetchall()
     
@@ -138,8 +180,9 @@ def main():
     
     if uploaded_file:
         image = Image.open(uploaded_file)
-        st.sidebar.image(image, caption="Uploaded Image", use_container_width=True)
+        st.sidebar.image(image, caption="Uploaded Image", use_column_width=True)
         st.session_state.current_image = encode_image(uploaded_file.getvalue())
+    
     if st.session_state.current_image and st.sidebar.button("Clear Image"):
         st.session_state.current_image = None
         # Clean up message history
@@ -152,12 +195,133 @@ def main():
             else:
                 text_only_messages.append(msg)
         st.session_state.messages = text_only_messages
-        st.rerun()
+        st.experimental_rerun()
+    
     if selected_vehicle:
         cursor.execute("SELECT * FROM vehicles WHERE id = %s", 
                       (selected_vehicle['id'],))
         vehicle_data = cursor.fetchone()
         display_vehicle_status(vehicle_data)
+        
+        # Fetch necessary variables for system prompt
+        current_vehicle_id = vehicle_data['id']
+        vehicle_model = vehicle_data['model']
+        vehicle_year = vehicle_data['year']
+        vehicle_vin = vehicle_data['vin']  # Get 'vin' from 'vehicle_data'
+        mileage = vehicle_data['current_mileage']
+        battery_percentage = vehicle_data['battery_level']
+        tire_pressure = json.loads(vehicle_data['tire_pressure'])
+        front_left_psi = tire_pressure['FL']
+        front_right_psi = tire_pressure['FR']
+        rear_left_psi = tire_pressure['RL']
+        rear_right_psi = tire_pressure['RR']
+        oil_life_percentage = vehicle_data['engine_oil_life']
+        service_date = vehicle_data['last_service_date']
+
+        # Get user's current location
+        user_location = get_current_location()
+        if user_location:
+            latitude = user_location['latitude']
+            longitude = user_location['longitude'] 
+            current_location = f"{latitude}, {longitude}"
+            current_city = reverse_geocode(latitude, longitude)
+            if current_city:
+                current_city = current_city.split()[0]  # Take only first word
+        else:
+            current_location = "Unknown"
+            current_city = "Unknown"
+        
+        # Get weather data
+        weather_data = weather_service.get_weather(current_city)
+        if weather_data:
+            current_temp = weather_data['temperature']
+            humidity_percentage = weather_data['humidity']
+            weather_description = weather_data['description']
+            wind_speed = weather_data['wind_speed']
+        else:
+            current_temp = 0
+            humidity_percentage = 0
+            weather_description = "Unknown"
+            wind_speed = 0
+        
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # System prompt with actual variables
+        SYSTEM_PROMPT = f"""You are Veloce AI, Volkswagen's intelligent vehicle assistant. You have access to the following real-time data and context:
+
+CONTEXT_VARIABLES = {{
+    "selected_vehicle": {{
+        "id": {current_vehicle_id},
+        "model": "{vehicle_model}",
+        "year": {vehicle_year},
+        "vin": "{vehicle_vin}",
+        "current_mileage": {mileage},
+        "battery_level": {battery_percentage},
+        "tire_pressure": {{
+            "FL": {front_left_psi},
+            "FR": {front_right_psi},
+            "RL": {rear_left_psi},
+            "RR": {rear_right_psi}
+        }},
+        "engine_oil_life": {oil_life_percentage},
+        "last_service_date": "{service_date}"
+    }},
+    "weather_data": {{
+        "city": "{current_city}",
+        "temperature": {current_temp},
+        "humidity": {humidity_percentage},
+        "description": "{weather_description}",
+        "wind_speed": {wind_speed}
+    }},
+    "time": "{current_time}",
+    "location": "{current_location}"
+}}
+
+DATABASE_ACCESS = {{
+    "vehicles": ["id", "model", "year", "vin", "current_mileage", "battery_level", "tire_pressure", "engine_oil_life", "last_service_date"],
+    "maintenance_records": ["id", "vehicle_id", "service_date", "service_type", "mileage", "description"]
+}}
+
+API_SERVICES = {{
+    "weather": "OpenWeatherMap for real-time weather data",
+    "voice": "ElevenLabs for text-to-speech",
+    "llm": "Groq for natural language processing"
+}}
+
+CAPABILITIES:
+1. Vehicle Status:
+   - Access real-time vehicle metrics from DATABASE_ACCESS
+   - Monitor battery levels for EVs (ID.4 series)
+   - Track tire pressure across all wheels
+   - Check engine oil life and maintenance status
+
+2. Weather & Navigation:
+   - Pull current weather from CONTEXT_VARIABLES['weather_data']
+   - Provide weather-based driving recommendations(also say the city name like "today the weather in <City-Name> is...")
+   - Access location data for navigation assistance(Just say the city name not the coordinates)
+
+3. Maintenance:
+   - Query maintenance_records table for service history
+   - Schedule and recommend maintenance based on vehicle data
+   - Alert on critical maintenance needs
+
+4. Voice Commands:
+   - Process natural language commands for vehicle control
+   - Convert responses to speech using ElevenLabs API
+
+RESPONSE GUIDELINES:
+- Only use data available in CONTEXT_VARIABLES or DATABASE_ACCESS
+- Indicate when data is not available or needs refresh
+- Format numbers with appropriate units (%, PSI, miles, °C)
+- Prioritize safety-critical information
+- Maintain professional Volkswagen brand voice
+
+If asked about non-VW vehicles, politely redirect to VW equivalents."""
+
+        # Update the system prompt in the message history
+        st.session_state.messages = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ] + [msg for msg in st.session_state.messages if msg["role"] != "system"]
     
     # Chat interface
     for message in st.session_state.messages:

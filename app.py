@@ -14,6 +14,7 @@ import requests
 from datetime import datetime
 from streamlit_javascript import st_javascript
 import geocoder
+from utils.music import MusicManager
 
 # Load environment variables and setup logging
 load_dotenv()
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 audio_manager = AudioManager()
 weather_service = WeatherService()
 groq_client = Groq()
+music_manager = MusicManager()
 
 def get_current_location():
     """Get the user's current location based on IP address."""
@@ -103,14 +105,47 @@ def display_vehicle_status(vehicle_data):
         st.plotly_chart(fig)
 
 def process_ai_response(messages):
+    # Extract the last user message more reliably
+    last_message = messages[-1]["content"]
+    last_text = ""
+    
+    # Add debug logging
+    logger.debug(f"Processing message: {last_message}")
+    
+    # Handle different message formats
+    if isinstance(last_message, list):
+        last_text = " ".join([c["text"] for c in last_message if c["type"] == "text"])
+    else:
+        last_text = str(last_message)
+    
+    logger.debug(f"Extracted text: {last_text}")
+    
+    # Check for music commands with more flexible matching
+    if any(word in last_text.lower() for word in ["play", "music", "song"]):
+        logger.info("Music command detected")
+        
+        # Extract song name more robustly
+        query = last_text.lower()
+        if "play" in query:
+            query = query.split("play", 1)[1].strip()
+        
+        logger.info(f"Searching for song: {query}")
+        
+        # Try to play the song
+        song_url = music_manager.search_song(query)
+        if song_url:
+            logger.info(f"Found song URL: {song_url}")
+            if music_manager.play_music(song_url):
+                return f"🎵 Now playing: {query}"
+            return f"Found the song but couldn't play {query}"
+        return f"Sorry, I couldn't find '{query}' on YouTube Music"
+
+    # Continue with existing image processing
     if st.session_state.current_image:
-        # Remove system message when using images
         messages_without_system = [msg for msg in messages if msg["role"] != "system"]
-        # Filter out any old image messages
         clean_messages = []
         for msg in messages_without_system:
             if isinstance(msg["content"], list):
-                # Keep only the most recent image
                 filtered_content = [c for c in msg["content"] if c["type"] == "text" or 
                                   (c["type"] == "image_url" and 
                                    c["image_url"]["url"].endswith(st.session_state.current_image))]
@@ -128,11 +163,10 @@ def process_ai_response(messages):
             max_tokens=1024
         )
     else:
-        # Reset to text-only mode
+        # Text-only mode (existing code)
         text_only_messages = []
         for msg in messages:
             if isinstance(msg["content"], list):
-                # Extract only text content
                 text_content = " ".join([c["text"] for c in msg["content"] if c["type"] == "text"])
                 if text_content:
                     text_only_messages.append({"role": msg["role"], "content": text_content})
@@ -285,7 +319,8 @@ DATABASE_ACCESS = {{
 API_SERVICES = {{
     "weather": "OpenWeatherMap for real-time weather data",
     "voice": "ElevenLabs for text-to-speech",
-    "llm": "Groq for natural language processing"
+    "llm": "Groq for natural language processing",
+    "music": "YTMusic API for music playback and search"
 }}
 
 CAPABILITIES:
@@ -308,6 +343,12 @@ CAPABILITIES:
 4. Voice Commands:
    - Process natural language commands for vehicle control
    - Convert responses to speech using ElevenLabs API
+
+5. Music Playback:
+   - Search and play music from YouTube Music
+   - Handle voice/text commands for music control
+   - Support song requests by name/artist
+   - Play music through Streamlit's audio player
 
 RESPONSE GUIDELINES:
 - Only use data available in CONTEXT_VARIABLES or DATABASE_ACCESS
